@@ -327,8 +327,9 @@ function getSorted() {
 /* ── Storage ── */
 const STORAGE_KEY = 'sktsh_2026_progress';
 const API_URL_KEY = 'sktsh_2026_api_url';
-let apiUrl = '';
-try { apiUrl = localStorage.getItem(API_URL_KEY) || ''; } catch(e) {}
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyppF0pXkYEZSUvU_os9cMpOy5f0LjEHE9fpw0oeiBEAKR8hXsjQun8R6JLzt7aIHs/exec';
+let apiUrl = DEFAULT_API_URL;
+try { apiUrl = localStorage.getItem(API_URL_KEY) || DEFAULT_API_URL; } catch(e) {}
 
 function setSyncUI(status, text) {
   document.getElementById('syncDot').className = 'sync-dot ' + status;
