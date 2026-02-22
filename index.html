@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>СКТШ 2026 — Трекер проходження</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f1923; --card: #1a2733; --card-hover: #223344;
+    --accent: #f97316; --accent2: #22c55e; --accent3: #3b82f6;
+    --text: #e2e8f0; --text-dim: #94a3b8; --done: #22c55e; --border: #2d3e50;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, #1a3a2a 0%, #0f1923 40%, #1a2540 100%); padding: 40px 20px 30px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content:''; position:absolute; top:0;left:0;right:0;bottom:0; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 200'%3E%3Cpath d='M0,200 L100,160 L200,180 L350,80 L450,120 L550,40 L650,90 L750,30 L850,70 L950,50 L1050,100 L1150,60 L1200,80 L1200,200 Z' fill='%23ffffff08'/%3E%3C/svg%3E") no-repeat bottom center; background-size:cover; opacity:0.5; }
+  .hero h1 { font-size: 2.2em; font-weight: 800; position: relative; z-index: 1; letter-spacing: -0.5px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--text-dim); margin-top: 8px; position: relative; z-index: 1; font-size: 0.95em; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px 40px; }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: -20px 0 30px; position: relative; z-index: 2; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; transition: transform 0.2s; }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-value { font-size: 1.7em; font-weight: 700; color: var(--accent); }
+  .stat-value.green { color: var(--accent2); }
+  .stat-value.blue { color: var(--accent3); }
+  .stat-label { font-size: 0.72em; color: var(--text-dim); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Progress */
+  .progress-section { margin-bottom: 30px; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .progress-header span { font-size: 0.85em; color: var(--text-dim); }
+  .progress-header strong { color: var(--accent); font-size: 1.1em; }
+  .progress-bar { background: var(--card); border-radius: 10px; height: 14px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), #4ade80); border-radius: 10px; transition: width 0.6s ease; }
+
+  /* Elevation Profile (SVG) */
+  .section-title { font-size: 1em; color: var(--text-dim); margin-bottom: 12px; font-weight: 500; }
+  .elev-profile-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 30px; overflow-x: auto; }
+  .elev-profile-wrap svg { width: 100%; height: 320px; display: block; }
+
+  /* Elevation bars */
+  .elev-section { margin-bottom: 30px; }
+  .elev-chart { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px 16px; overflow-x: auto; min-height: 362px; }
+  .elev-bars { display: flex; align-items: flex-end; gap: 6px; height: 320px; }
+  .elev-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 70px; cursor: pointer; }
+  .elev-bar { width: 100%; border-radius: 6px 6px 0 0; transition: all 0.3s; min-height: 4px; }
+  .elev-bar.done-bar { background: linear-gradient(180deg, #22c55e, #16a34a); }
+  .elev-bar.plan-bar { background: linear-gradient(180deg, #f97316, #ea580c); }
+  .elev-bar-val { font-size: 0.72em; color: var(--text); margin-bottom: 4px; font-weight: 600; }
+  .elev-bar-label { font-size: 0.65em; color: var(--text-dim); margin-top: 8px; text-align: center; line-height: 1.3; }
+  .elev-bar-label .from { color: #64748b; }
+  .elev-bar-label .arrow { color: #475569; font-size: 0.9em; }
+  .elev-bar-label .to { color: var(--text); font-weight: 600; }
+
+  /* Sort bar */
+  .sort-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .sort-bar span { font-size: 0.8em; color: var(--text-dim); margin-right: 4px; }
+  .sort-btn { background: var(--card); border: 1px solid var(--border); color: var(--text-dim); padding: 5px 12px; border-radius: 20px; font-size: 0.75em; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sort-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* Route timeline */
+  .route { position: relative; }
+  .stage-card { display: grid; grid-template-columns: 50px 1fr; margin-bottom: 2px; cursor: pointer; }
+  .timeline { display: flex; flex-direction: column; align-items: center; }
+  .timeline-dot { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); z-index: 1; margin-top: 20px; transition: all 0.3s; flex-shrink: 0; }
+  .timeline-line { width: 2px; flex: 1; background: var(--border); transition: background 0.3s; }
+  .stage-card.done .timeline-dot { border-color: var(--done); background: var(--done); box-shadow: 0 0 10px #22c55e55; }
+  .stage-card.done .timeline-line { background: var(--done); }
+  .stage-card.transfer .timeline-dot { border-color: var(--text-dim); background: var(--text-dim); width: 14px; height: 14px; margin-top: 24px; }
+  .card-body { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; margin: 4px 0; transition: all 0.2s; }
+  .stage-card:hover .card-body { background: var(--card-hover); border-color: #3d5060; }
+  .stage-card.done .card-body { border-color: #22c55e44; background: #1a2f25; }
+  .stage-card.transfer .card-body { background: #1f2937; border-style: dashed; opacity: 0.7; }
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; gap: 6px; }
+  .stage-name { font-weight: 600; font-size: 1.05em; }
+  .stage-num { color: var(--text-dim); font-size: 0.8em; margin-right: 6px; }
+  .badge { font-size: 0.7em; padding: 3px 10px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .badge-done { background: #22c55e22; color: var(--done); border: 1px solid #22c55e44; }
+  .badge-plan { background: #f9731622; color: var(--accent); border: 1px solid #f9731644; }
+  .badge-transfer { background: #64748b22; color: var(--text-dim); border: 1px solid #64748b44; }
+  .badge-diff1 { background: #3b82f622; color: #60a5fa; }
+  .badge-diff2 { background: #f59e0b22; color: #fbbf24; }
+  .badge-diff3 { background: #ef444422; color: #f87171; }
+  .card-metrics { display: flex; gap: 16px; flex-wrap: wrap; }
+  .metric { display: flex; flex-direction: column; }
+  .metric-val { font-weight: 600; font-size: 0.95em; }
+  .metric-label { font-size: 0.7em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .metric-val.up { color: #f87171; }
+  .metric-val.down { color: #60a5fa; }
+  .card-note { font-size: 0.8em; color: var(--text-dim); margin-top: 8px; font-style: italic; }
+  .card-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .toggle-btn, .detail-btn { display: inline-flex; align-items: center; gap: 6px; background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 4px 12px; border-radius: 6px; font-size: 0.75em; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .toggle-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .detail-btn:hover { border-color: var(--accent3); color: var(--accent3); }
+  .stage-card.done .toggle-btn { border-color: #22c55e44; color: var(--done); }
+
+  /* Detail page overlay */
+  .detail-overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.75); z-index:50; overflow-y:auto; padding:20px; }
+  .detail-overlay.active { display:flex; justify-content:center; align-items:flex-start; }
+  .detail-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; max-width: 900px; width: 100%; padding: 30px; margin: 20px 0; }
+  .detail-close { background:none; border:none; color:var(--text-dim); font-size:1.8em; cursor:pointer; float:right; line-height:1; }
+  .detail-close:hover { color:var(--text); }
+  .detail-header { margin-bottom: 20px; }
+  .detail-header h2 { font-size: 1.5em; margin-bottom: 4px; }
+  .detail-header .detail-sub { color: var(--text-dim); font-size: 0.9em; }
+  .detail-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .detail-stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
+  .detail-stat .ds-val { font-size: 1.4em; font-weight: 700; }
+  .detail-stat .ds-label { font-size: 0.7em; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+  .detail-elev-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .detail-elev-wrap svg { width:100%; height:200px; display:block; }
+  .detail-info { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .detail-info h3 { font-size: 0.95em; margin-bottom: 10px; color: var(--accent); }
+  .detail-info p { font-size: 0.88em; color: var(--text-dim); line-height: 1.7; margin-bottom: 8px; }
+
+  /* Footer & sync */
+  .footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.8em; }
+  .sync-line { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .sync-dot.online { background: var(--accent2); box-shadow: 0 0 6px #22c55e88; }
+  .sync-dot.offline { background: #f97316; }
+  .sync-dot.syncing { background: var(--accent3); animation: pulse 1s infinite; }
+  .sync-dot.error { background: #ef4444; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .sync-text { color: var(--text-dim); font-size: 0.8em; }
+  .sync-setup { color: var(--accent); text-decoration: underline; cursor: pointer; font-size: 0.8em; }
+
+  /* Setup modal */
+  .modal-overlay { display:none; position:fixed; top:0;left:0;right:0;bottom:0; background:rgba(0,0,0,0.7); z-index:100; justify-content:center; align-items:center; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:30px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
+  .modal h2 { font-size:1.3em; margin-bottom:16px; color:var(--accent); }
+  .modal p,.modal li { font-size:0.9em; color:var(--text-dim); line-height:1.6; margin-bottom:8px; }
+  .modal ol { padding-left:20px; margin-bottom:16px; }
+  .modal code { background:#0f1923; padding:2px 6px; border-radius:4px; font-size:0.85em; color:var(--accent); }
+  .modal pre { background:#0f1923; padding:12px; border-radius:8px; overflow-x:auto; font-size:0.78em; color:var(--text); margin:12px 0; border:1px solid var(--border); }
+  .modal input[type="text"] { width:100%; padding:10px 14px; background:#0f1923; border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:0.9em; margin:8px 0; font-family:monospace; }
+  .modal input:focus { outline:none; border-color:var(--accent); }
+  .modal-buttons { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .btn { padding:8px 20px; border-radius:8px; border:none; font-size:0.85em; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:inherit; }
+  .btn-primary { background:var(--accent); color:white; } .btn-primary:hover { background:#ea580c; }
+  .btn-secondary { background:var(--border); color:var(--text); } .btn-secondary:hover { background:#3d5060; }
+  .btn-danger { background:#ef4444; color:white; } .btn-danger:hover { background:#dc2626; }
+  .modal-close { position:absolute; top:12px; right:16px; background:none; border:none; color:var(--text-dim); font-size:1.5em; cursor:pointer; }
+
+  @media (max-width:600px) {
+    .hero h1 { font-size:1.5em; }
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .card-metrics { gap:10px; }
+    .sort-bar { gap:5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🏔 <span>СКТШ</span> 2026</h1>
+  <p>Східно-Карпатський Туристичний Шлях — Петро Хомета</p>
+</div>
+
+<div class="container">
+  <div class="stats" id="stats"></div>
+  <div class="progress-section" id="progress"></div>
+
+  <h3 class="section-title">Профіль висот маршруту</h3>
+  <div class="elev-profile-wrap"><svg id="elevSvg"></svg></div>
+
+  <h3 class="section-title">Набір висоти по етапах</h3>
+  <div class="elev-section">
+    <div class="elev-chart"><div class="elev-bars" id="elevBars"></div></div>
+  </div>
+
+  <div class="sort-bar" id="sortBar">
+    <span>Сортувати:</span>
+  </div>
+  <div class="route" id="route"></div>
+</div>
+
+<!-- Detail overlay -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel" id="detailPanel"></div>
+</div>
+
+<!-- Setup Modal -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeSetup()">&times;</button>
+    <h2>Налаштування Google Sheets</h2>
+    <p>Щоб синхронізувати прогрес через Google Sheets, виконай 3 кроки:</p>
+    <ol>
+      <li>Створи нову Google Таблицю. На першому аркуші у комірку <code>A1</code> напиши <code>stage_index</code>, у <code>B1</code> — <code>done</code></li>
+      <li>Відкрий <code>Розширення → Apps Script</code>, видали все і встав код нижче, натисни <strong>Зберегти</strong></li>
+      <li>Натисни <strong>Розгорнути → Нове розгортання</strong>, обери тип <code>Веб-додаток</code>, доступ: <strong>Усі</strong>, натисни <strong>Розгорнути</strong> і скопіюй URL</li>
+    </ol>
+    <p><strong>Код для Apps Script:</strong></p>
+    <pre id="scriptCode">function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var result = {};
+  for (var i = 1; i &lt; data.length; i++) {
+    result[data[i][0]] = data[i][1] === true || data[i][1] === 'TRUE';
+  }
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var payload = JSON.parse(e.postData.contents);
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) sheet.getRange(2, 1, lastRow - 1, 2).clear();
+  var row = 2;
+  for (var key in payload) {
+    sheet.getRange(row, 1).setValue(parseInt(key));
+    sheet.getRange(row, 2).setValue(payload[key]);
+    row++;
+  }
+  return ContentService.createTextOutput(JSON.stringify({status:'ok'}))
+    .setMimeType(ContentService.MimeType.JSON);
+}</pre>
+    <button class="btn btn-secondary" onclick="copyScript()" id="copyBtn" style="margin-top:8px">Копіювати код</button>
+    <p style="margin-top:16px"><strong>Встав URL розгортання:</strong></p>
+    <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfyc.../exec" />
+    <div class="modal-buttons">
+      <button class="btn btn-primary" onclick="saveApiUrl()">Зберегти і підключити</button>
+      <button class="btn btn-secondary" onclick="closeSetup()">Скасувати</button>
+      <button class="btn btn-danger" onclick="disconnectSheets()" id="disconnectBtn" style="display:none">Відключити</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="sync-line">
+    <span class="sync-dot offline" id="syncDot"></span>
+    <span class="sync-text" id="syncText">Локальний режим</span>
+    <span class="sync-setup" onclick="openSetup()">Налаштувати Google Sheets</span>
+  </div>
+  СКТШ 2026 Tracker — Petro Khometa | Дані з GPX-треків Wikiloc
+</div>
+
+<script>
+/* ── DATA ── */
+const STAGES = [
+  { id:1, idx:0, name:"Воловець → Міжгір'я", km:44.9, gain:2725, loss:2823, maxEle:1594, minEle:429, format:"Похід (3 дні)", days:3, hours:12.3, diff:3, done:false, note:"Старт СКТШ. Набір значний, потрібен ранній вихід",
+    detail:"Перший і один з найдовших етапів маршруту. Стартуємо з Воловця (527 м) і проходимо через кілька хребтів, досягаючи максимуму 1594 м. Маршрут проходить через мальовничі полонини з видами на Синевірське озеро. Рекомендовано ранній старт через велику дистанцію." },
+  { id:2, idx:1, name:"Міжгір'я → Синевір", km:17.2, gain:1365, loss:1407, maxEle:1512, minEle:847, format:"1 день", days:1, hours:4.7, diff:2, done:false, note:"Короткий етап, можна без ночівлі",
+    detail:"Найкоротший етап СКТШ. Маршрут піднімається від Міжгір'я до полонин біля Синевірського озера. Можна пройти за один день з легким рюкзаком. Гарна можливість відвідати озеро Синевір — найбільше гірське озеро Карпат." },
+  { id:0, idx:2, name:"Синевір → Свобода", km:0, gain:0, loss:0, maxEle:0, minEle:0, format:"Трансфер авто", days:0, hours:0, diff:0, done:false, transfer:true, note:"Дорога — проїзд автомобілем", detail:"" },
+  { id:3, idx:3, name:"Свобода → Осмолода", km:32.8, gain:2126, loss:2355, maxEle:1735, minEle:720, format:"Похід (2-3 дні)", days:3, hours:9.0, diff:3, done:false, note:"Значний спуск, бережи коліна",
+    detail:"Етап з максимальною різницею висот. Маршрут проходить через хребет із піком 1735 м та спускається до долини Осмолоди. Значний спуск (2355 м сумарно) — рекомендовано трекінгові палки та уважність до колін." },
+  { id:4, idx:4, name:"Осмолода → Бистриця", km:39.8, gain:2393, loss:2370, maxEle:1820, minEle:716, format:"Похід (3 дні)", days:3, hours:10.9, diff:3, done:true, note:"Вже пройдений етап",
+    detail:"Один з найвищих етапів з максимумом 1820 м. Маршрут проходить через дикі полонини та хвойні ліси. Етап вже пройдено — є досвід проходження для планування наступних." },
+  { id:5, idx:5, name:"Бистриця → Татарів", km:34.6, gain:2150, loss:2315, maxEle:1659, minEle:637, format:"Похід (2-3 дні)", days:3, hours:9.5, diff:3, done:false, note:"Фініш біля Татарова — зручна логістика",
+    detail:"Етап завершується у Татарові — популярному туристичному містечку з хорошою інфраструктурою. Зручна логістика для завершення або початку наступного етапу. Маршрут проходить через кілька перевалів з видами на Чорногірський хребет." },
+  { id:6, idx:6, name:"Татарів → Кривопілля", km:32.7, gain:1788, loss:1471, maxEle:1409, minEle:651, format:"Похід (2 дні)", days:2, hours:8.9, diff:2, done:false, note:"Менший набір, відносно легший етап",
+    detail:"Один з легших етапів СКТШ з помірним набором висоти. Маршрут плавно піднімається через ліси до полонин (1409 м) і спускається до Кривопілля. Можна пройти за 2 дні у комфортному темпі." },
+  { id:7, idx:7, name:"Кривопілля → Дземброня", km:20.6, gain:1209, loss:1355, maxEle:1557, minEle:810, format:"1 день", days:1, hours:5.6, diff:2, done:false, note:"Короткий етап, можна за день з легким рюкзаком",
+    detail:"Другий короткий етап маршруту. З'єднує Кривопілля з Дземброню — одним з найвисокогірніших сіл України. Маршрут проходить через живописні полонини. Ідеально підходить для одноденного проходження." },
+  { id:8, idx:8, name:"Дземброня → Кваси", km:47.5, gain:3067, loss:3313, maxEle:2044, minEle:573, format:"Похід (3-4 дні)", days:4, hours:13.0, diff:4, done:false, note:"Найскладніший! Піп Іван (2044м). Потрібна хороша погода",
+    detail:"Найскладніший і найдовший етап СКТШ! Проходить через найвищу точку маршруту — гору Піп Іван (2044 м) з руїнами обсерваторії «Білий Слон». Потрібна хороша погода та відповідна підготовка. Значний перепад висот — від 573 м до 2044 м. Рекомендовано 3-4 дні з запасом на погоду." },
+  { id:9, idx:9, name:"Кваси → Усть-Чорна", km:41.7, gain:2377, loss:2736, maxEle:1868, minEle:529, format:"Похід (3 дні)", days:3, hours:11.4, diff:3, done:false, note:"Великий спуск, важкий на коліна",
+    detail:"Другий за складністю етап з максимумом 1868 м та великим сумарним спуском (2736 м). Маршрут проходить через Свидовецький хребет із альпійськими пейзажами. Трекінгові палки обов'язкові через тривалий спуск." },
+  { id:10, idx:10, name:"Усть-Чорна → Колочава", km:34.6, gain:2108, loss:2074, maxEle:1555, minEle:523, format:"Похід (2-3 дні)", days:3, hours:9.5, diff:3, done:false, note:"Фінальний етап СКТШ!",
+    detail:"Фінальний етап маршруту! Завершується у Колочаві — унікальному селі-музеї з кількома музеями просто неба. Маршрут проходить через мальовничі хребти Закарпаття. Фінішна точка СКТШ — чудове завершення великої подорожі!" },
+];
+
+/* Elevation profiles from GPX */
+const PROFILES = [
+[527,813,933,1049,1197,1216,1278,1254,1305,1291,1331,1408,1472,1593,1563,1486,1418,1370,1351,1416,1411,1483,1449,1448,1374,1347,1364,1308,1225,1233,1183,1218,1180,1187,1190,1190,1133,1082,1103,1091,1139,1155,1082,995,970,1106,986,1013,1138,944],
+[890,1006,1084,1166,1182,1208,1243,1253,1256,1269,1296,1307,1353,1386,1409,1465,1512,1387,1370,1385,1334,1320,1277,1254,1208,1178,1148,1111,1177,1268,1346,1415,1426,1425,1410,1403,1420,1421,1427,1446,1460,1469,1425,1339,1250,1156,1089,1055,986,1000],
+[],
+[949,966,1069,1131,1144,1189,1222,1221,1212,1229,1243,1270,1500,1683,1709,1681,1643,1613,1582,1506,1468,1321,1154,964,858,838,887,921,973,1073,1108,1124,1245,1608,1482,1403,1320,1247,1150,964,941,913,902,868,852,839,819,798,786,771],
+[719,853,947,1038,1093,1191,1223,1265,1348,1362,1371,1434,1477,1467,1494,1533,1567,1632,1664,1665,1674,1758,1735,1767,1695,1610,1498,1409,1337,1355,1381,1408,1596,1629,1753,1735,1648,1403,1431,1427,1310,1282,1190,1092,1022,941,915,888,858,832],
+[816,889,978,1003,1031,1209,1291,1340,1311,1310,1310,1348,1108,1272,1265,1201,1348,1442,1402,1382,1338,1342,1430,1555,1543,1541,1550,1579,1608,1655,1370,1316,1409,1458,1340,1281,1211,1157,1125,1092,1057,1027,980,945,924,888,847,819,777,724],
+[656,681,772,1016,1046,1089,1196,1193,1212,1233,1231,1207,1220,1325,1337,1223,1230,1245,1241,1243,1244,1243,1246,1255,1270,1276,1283,1305,1325,1346,1366,1334,1315,1330,1310,1270,1228,1185,1158,1128,1115,1103,1079,1075,1070,1054,1032,1010,987,975],
+[967,1138,1164,1209,1232,1240,1269,1445,1473,1498,1528,1525,1548,1494,1466,1466,1407,1416,1446,1420,1404,1336,1276,1254,1235,1220,1177,1183,1141,1110,1083,1038,1004,960,897,840,845,836,827,823,899,922,940,961,977,1000,1015,1030,1030,1015],
+[819,1251,1435,1695,1809,1801,1867,1797,1879,1902,1943,1938,1947,1895,1837,1802,1724,1731,1757,1878,1827,1874,2007,1758,1533,1528,1540,1549,1629,1738,1848,1923,1987,1861,1804,1721,1595,1592,1588,1576,1445,1398,1341,1283,1225,1206,1196,1180,1128,1005],
+[893,1422,1470,1485,1526,1585,1653,1706,1737,1760,1805,1838,1856,1850,1804,1790,1819,1855,1847,1762,1758,1750,1698,1617,1544,1550,1625,1654,1645,1656,1674,1680,1683,1595,1611,1573,1315,1292,1237,1178,1166,1109,1055,1005,927,863,799,721,651,579],
+[519,634,701,790,874,933,1022,1082,1133,1185,1237,1306,1295,1333,1331,1360,1411,1411,1460,1409,1457,1478,1404,1328,1264,1300,1330,1387,1483,1423,1384,1448,1549,1530,1502,1483,1467,1446,1456,1504,1349,1232,1130,1017,994,926,788,649,597,574]
+];
+
+const STAGE_COLORS = ['#f97316','#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6','#8b5cf6','#d946ef','#ec4899','#f43f5e'];
+
+/* ── Sorting ── */
+let currentSort = 'route';
+const SORT_OPTIONS = [
+  { key:'route', label:'За маршрутом' },
+  { key:'km_desc', label:'Км ↓' },
+  { key:'km_asc', label:'Км ↑' },
+  { key:'gain_desc', label:'Набір ↓' },
+  { key:'gain_asc', label:'Набір ↑' },
+  { key:'diff_desc', label:'Складність ↓' },
+  { key:'days_desc', label:'Днів ↓' },
+  { key:'maxele_desc', label:'Висота ↓' },
+  { key:'done_first', label:'Пройдені' },
+  { key:'todo_first', label:'Заплановані' },
+];
+
+function getSorted() {
+  const hiking = STAGES.filter(s => !s.transfer);
+  const transfer = STAGES.filter(s => s.transfer);
+  let list = [...hiking];
+  switch(currentSort) {
+    case 'km_desc': list.sort((a,b) => b.km - a.km); break;
+    case 'km_asc': list.sort((a,b) => a.km - b.km); break;
+    case 'gain_desc': list.sort((a,b) => b.gain - a.gain); break;
+    case 'gain_asc': list.sort((a,b) => a.gain - b.gain); break;
+    case 'diff_desc': list.sort((a,b) => b.diff - a.diff || b.gain - a.gain); break;
+    case 'days_desc': list.sort((a,b) => b.days - a.days); break;
+    case 'maxele_desc': list.sort((a,b) => b.maxEle - a.maxEle); break;
+    case 'done_first': list.sort((a,b) => b.done - a.done); break;
+    case 'todo_first': list.sort((a,b) => a.done - b.done); break;
+    default: return STAGES; // route order includes transfer
+  }
+  // Insert transfer in its position if route order
+  if (currentSort === 'route') return STAGES;
+  return list;
+}
+
+/* ── Storage ── */
+const STORAGE_KEY = 'sktsh_2026_progress';
+const API_URL_KEY = 'sktsh_2026_api_url';
+let apiUrl = '';
+try { apiUrl = localStorage.getItem(API_URL_KEY) || ''; } catch(e) {}
+
+function setSyncUI(status, text) {
+  document.getElementById('syncDot').className = 'sync-dot ' + status;
+  document.getElementById('syncText').textContent = text;
+}
+
+function loadStateLocal() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if(s) { const m=JSON.parse(s); STAGES.forEach((st,i)=>{ if(m[i]!==undefined) st.done=m[i]; }); } } catch(e){}
+}
+
+function saveStateLocal() {
+  try { const m={}; STAGES.forEach((s,i)=>{m[i]=s.done}); localStorage.setItem(STORAGE_KEY,JSON.stringify(m)); } catch(e){}
+}
+
+async function loadStateRemote() {
+  if(!apiUrl) return false;
+  setSyncUI('syncing','Синхронізація...');
+  try { const r=await fetch(apiUrl); const d=await r.json(); STAGES.forEach((s,i)=>{if(d[i]!==undefined)s.done=d[i]}); saveStateLocal(); setSyncUI('online','Google Sheets підключено'); return true; } catch(e){ setSyncUI('error',"Помилка з'єднання"); return false; }
+}
+
+async function saveStateRemote() {
+  if(!apiUrl) return;
+  setSyncUI('syncing','Зберігаю...');
+  try { const m={}; STAGES.forEach((s,i)=>{m[i]=s.done}); await fetch(apiUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(m)}); setSyncUI('online','Google Sheets підключено'); } catch(e){ setSyncUI('error','Помилка збереження'); }
+}
+
+function toggle(idx) {
+  const s = STAGES[idx]; if(s.transfer) return;
+  s.done = !s.done; saveStateLocal(); saveStateRemote(); render();
+}
+
+/* ── Setup modal ── */
+function openSetup() { document.getElementById('setupModal').classList.add('active'); document.getElementById('apiUrlInput').value=apiUrl; document.getElementById('disconnectBtn').style.display=apiUrl?'inline-block':'none'; }
+function closeSetup() { document.getElementById('setupModal').classList.remove('active'); }
+function copyScript() { const c=document.getElementById('scriptCode').textContent; navigator.clipboard.writeText(c).then(()=>{ document.getElementById('copyBtn').textContent='Скопійовано!'; setTimeout(()=>{document.getElementById('copyBtn').textContent='Копіювати код'},2000); }); }
+async function saveApiUrl() { const u=document.getElementById('apiUrlInput').value.trim(); if(!u)return; apiUrl=u; localStorage.setItem(API_URL_KEY,u); closeSetup(); await saveStateRemote(); await loadStateRemote(); render(); }
+function disconnectSheets() { apiUrl=''; localStorage.removeItem(API_URL_KEY); setSyncUI('offline','Локальний режим'); closeSetup(); }
+
+/* ── Detail page ── */
+function openDetail(idx) {
+  const s = STAGES[idx];
+  if (s.transfer) return;
+  const profile = PROFILES[idx] || [];
+  const dl = diffLabel(s.diff);
+  const panel = document.getElementById('detailPanel');
+
+  let profileSvg = '';
+  if (profile.length > 1) {
+    const mn = Math.min(...profile), mx = Math.max(...profile);
+    const W=840, H=180, pad=10;
+    let path = '';
+    let area = `M ${pad} ${H-pad} `;
+    profile.forEach((e,i) => {
+      const x = pad + (i/(profile.length-1))*(W-2*pad);
+      const y = (H-2*pad) - ((e-mn)/(mx-mn||1))*(H-2*pad) + pad;
+      if(i===0) { path += `M ${x} ${y}`; area += `L ${x} ${y}`; }
+      else { path += ` L ${x} ${y}`; area += ` L ${x} ${y}`; }
+    });
+    area += ` L ${pad+(profile.length-1)/(profile.length-1)*(W-2*pad)} ${H-pad} Z`;
+    profileSvg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:200px">
+      <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${STAGE_COLORS[idx % STAGE_COLORS.length]}" stop-opacity="0.3"/><stop offset="100%" stop-color="${STAGE_COLORS[idx % STAGE_COLORS.length]}" stop-opacity="0.02"/></linearGradient></defs>
+      <path d="${area}" fill="url(#dg)"/>
+      <path d="${path}" fill="none" stroke="${STAGE_COLORS[idx % STAGE_COLORS.length]}" stroke-width="2.5"/>
+      <text x="${pad}" y="${pad+10}" fill="#94a3b8" font-size="11" font-family="Inter">${mx} м</text>
+      <text x="${pad}" y="${H-pad-2}" fill="#94a3b8" font-size="11" font-family="Inter">${mn} м</text>
+    </svg>`;
+  }
+
+  panel.innerHTML = `
+    <button class="detail-close" onclick="closeDetail()">&times;</button>
+    <div class="detail-header">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <h2>#${s.id} ${s.name}</h2>
+        <span class="badge ${dl.cls}">${dl.text}</span>
+        <span class="badge ${s.done?'badge-done':'badge-plan'}">${s.done?'✅ Пройдено':'🔲 Заплановано'}</span>
+      </div>
+      <p class="detail-sub">${s.format} · ${s.days} ${s.days===1?'день':'дні(-ів)'}</p>
+    </div>
+    <div class="detail-stats">
+      <div class="detail-stat"><div class="ds-val" style="color:var(--accent)">${s.km} км</div><div class="ds-label">Дистанція</div></div>
+      <div class="detail-stat"><div class="ds-val" style="color:#f87171">↑ ${s.gain} м</div><div class="ds-label">Набір висоти</div></div>
+      <div class="detail-stat"><div class="ds-val" style="color:#60a5fa">↓ ${s.loss} м</div><div class="ds-label">Спуск</div></div>
+      <div class="detail-stat"><div class="ds-val" style="color:var(--accent2)">${s.maxEle} м</div><div class="ds-label">Макс. висота</div></div>
+      <div class="detail-stat"><div class="ds-val" style="color:var(--accent3)">${s.minEle} м</div><div class="ds-label">Мін. висота</div></div>
+      <div class="detail-stat"><div class="ds-val">${s.hours} год</div><div class="ds-label">Час руху</div></div>
+      <div class="detail-stat"><div class="ds-val">${(s.gain/s.km).toFixed(0)} м/км</div><div class="ds-label">Набір на км</div></div>
+      <div class="detail-stat"><div class="ds-val">${(s.maxEle - s.minEle)} м</div><div class="ds-label">Перепад</div></div>
+    </div>
+    ${profileSvg ? `<div class="detail-elev-wrap"><h3 class="section-title" style="margin-bottom:8px">Профіль висот</h3>${profileSvg}</div>` : ''}
+    <div class="detail-info">
+      <h3>Опис етапу</h3>
+      <p>${s.detail}</p>
+      <p style="margin-top:12px"><em>${s.note}</em></p>
+    </div>
+    <div style="margin-top:16px; display:flex; gap:10px;">
+      <button class="btn btn-primary" onclick="toggle(${idx});openDetail(${idx})">${s.done?'↩ Зняти позначку':'✓ Позначити пройденим'}</button>
+      <button class="btn btn-secondary" onclick="closeDetail()">Закрити</button>
+    </div>`;
+  document.getElementById('detailOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ── Stats ── */
+function calcStats() {
+  const h = STAGES.filter(s=>!s.transfer), d = h.filter(s=>s.done);
+  return {
+    totalKm: h.reduce((a,s)=>a+s.km,0), doneKm: d.reduce((a,s)=>a+s.km,0),
+    totalGain: h.reduce((a,s)=>a+s.gain,0), totalDays: h.reduce((a,s)=>a+s.days,0),
+    doneCount: d.length, totalCount: h.length
+  };
+}
+
+function diffLabel(d) {
+  if(d<=2) return {text:'Помірний',cls:'badge-diff1'};
+  if(d<=3) return {text:'Складний',cls:'badge-diff2'};
+  return {text:'Дуже складний',cls:'badge-diff3'};
+}
+
+/* ── Elevation Profile SVG ── */
+function renderElevProfile() {
+  const svg = document.getElementById('elevSvg');
+  const W = 1060, H = 320, pad = 45, padR = 10, padT = 55, padB = 35;
+  // Flatten all profiles into one continuous array with segment info
+  let allPts = [];
+  let segBounds = [];
+  STAGES.forEach((s, si) => {
+    if (s.transfer || !PROFILES[si] || PROFILES[si].length === 0) return;
+    const start = allPts.length;
+    PROFILES[si].forEach(e => allPts.push({ ele: e, segIdx: si }));
+    segBounds.push({ si, start, end: allPts.length - 1 });
+  });
+  if (allPts.length < 2) return;
+  const mn = Math.min(...allPts.map(p=>p.ele));
+  const mx = Math.max(...allPts.map(p=>p.ele));
+
+  const xScale = (i) => pad + (i / (allPts.length - 1)) * (W - pad - padR);
+  const yScale = (e) => padT + (H - padT - padB) - ((e - mn) / (mx - mn || 1)) * (H - padT - padB);
+
+  let svgContent = '';
+  // Y axis labels
+  const steps = [500, 1000, 1500, 2000];
+  steps.forEach(v => {
+    if (v >= mn && v <= mx + 100) {
+      const y = yScale(v);
+      svgContent += `<line x1="${pad}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#2d3e50" stroke-width="0.5" stroke-dasharray="4"/>`;
+      svgContent += `<text x="${pad-6}" y="${y+4}" fill="#64748b" font-size="10" font-family="Inter" text-anchor="end">${v}</text>`;
+    }
+  });
+
+  // Draw each segment
+  segBounds.forEach(seg => {
+    const s = STAGES[seg.si];
+    const col = STAGE_COLORS[seg.si % STAGE_COLORS.length];
+    const opacity = s.done ? 1 : 0.7;
+    let path = '', area = `M ${xScale(seg.start)} ${yScale(mn)} `;
+    for (let i = seg.start; i <= seg.end; i++) {
+      const x = xScale(i), y = yScale(allPts[i].ele);
+      if (i === seg.start) { path += `M ${x} ${y}`; area += `L ${x} ${y}`; }
+      else { path += ` L ${x} ${y}`; area += ` L ${x} ${y}`; }
+    }
+    area += ` L ${xScale(seg.end)} ${yScale(mn)} Z`;
+    svgContent += `<path d="${area}" fill="${col}" opacity="${opacity * 0.15}"/>`;
+    svgContent += `<path d="${path}" fill="none" stroke="${col}" stroke-width="2" opacity="${opacity}"/>`;
+    // Segment label at midpoint
+    const midI = Math.floor((seg.start + seg.end) / 2);
+    const midX = xScale(midI);
+    const labelY = H - 8;
+    const shortName = s.name.split(' → ')[1] || s.name;
+    if (seg.end - seg.start > 8) {
+      svgContent += `<text x="${midX}" y="${labelY}" fill="${col}" font-size="8" font-family="Inter" text-anchor="middle" opacity="0.8">${shortName}</text>`;
+    }
+    // Boundary line
+    if (seg.start > 0) {
+      svgContent += `<line x1="${xScale(seg.start)}" y1="${padT}" x2="${xScale(seg.start)}" y2="${H-padB}" stroke="#2d3e50" stroke-width="0.5" stroke-dasharray="2"/>`;
+    }
+  });
+
+  // Start & End markers
+  const firstSeg = segBounds[0];
+  const lastSeg = segBounds[segBounds.length - 1];
+  const startX = xScale(firstSeg.start);
+  const startY = yScale(allPts[firstSeg.start].ele);
+  const endX = xScale(lastSeg.end);
+  const endY = yScale(allPts[lastSeg.end].ele);
+  const startEle = Math.round(allPts[firstSeg.start].ele);
+  const endEle = Math.round(allPts[lastSeg.end].ele);
+
+  // Start marker
+  svgContent += `<circle cx="${startX}" cy="${startY}" r="5" fill="#22c55e" stroke="#0f1923" stroke-width="2"/>`;
+  svgContent += `<line x1="${startX}" y1="${startY}" x2="${startX}" y2="${startY - 28}" stroke="#22c55e" stroke-width="1.5" stroke-dasharray="3"/>`;
+  svgContent += `<rect x="${startX - 42}" y="${startY - 46}" width="84" height="18" rx="4" fill="#22c55e" opacity="0.9"/>`;
+  svgContent += `<text x="${startX}" y="${startY - 33}" fill="#0f1923" font-size="10" font-family="Inter" font-weight="700" text-anchor="middle">Воловець</text>`;
+  svgContent += `<text x="${startX}" y="${startY + 16}" fill="#94a3b8" font-size="9" font-family="Inter" text-anchor="middle">${startEle} м</text>`;
+
+  // End marker
+  svgContent += `<circle cx="${endX}" cy="${endY}" r="5" fill="#f97316" stroke="#0f1923" stroke-width="2"/>`;
+  svgContent += `<line x1="${endX}" y1="${endY}" x2="${endX}" y2="${endY - 28}" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3"/>`;
+  svgContent += `<rect x="${endX - 42}" y="${endY - 46}" width="84" height="18" rx="4" fill="#f97316" opacity="0.9"/>`;
+  svgContent += `<text x="${endX}" y="${endY - 33}" fill="#0f1923" font-size="10" font-family="Inter" font-weight="700" text-anchor="middle">Колочава</text>`;
+  svgContent += `<text x="${endX}" y="${endY + 16}" fill="#94a3b8" font-size="9" font-family="Inter" text-anchor="middle">${endEle} м</text>`;
+
+  // Peak marker (highest point)
+  let peakIdx = 0;
+  allPts.forEach((p, i) => { if (p.ele > allPts[peakIdx].ele) peakIdx = i; });
+  const peakX = xScale(peakIdx);
+  const peakY = yScale(allPts[peakIdx].ele);
+  const peakEle = Math.round(allPts[peakIdx].ele);
+  svgContent += `<circle cx="${peakX}" cy="${peakY}" r="4" fill="#ef4444" stroke="#0f1923" stroke-width="2"/>`;
+  svgContent += `<text x="${peakX}" y="${peakY - 10}" fill="#ef4444" font-size="9" font-family="Inter" font-weight="600" text-anchor="middle">▲ ${peakEle} м</text>`;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = svgContent;
+}
+
+/* ── Render ── */
+function render() {
+  const st = calcStats();
+  const pct = st.totalKm > 0 ? (st.doneKm / st.totalKm * 100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="stat-value green">${st.doneCount}/${st.totalCount}</div><div class="stat-label">Етапів пройдено</div></div>
+    <div class="stat-card"><div class="stat-value">${st.totalKm.toFixed(0)} км</div><div class="stat-label">Загальна дистанція</div></div>
+    <div class="stat-card"><div class="stat-value green">${st.doneKm.toFixed(0)} км</div><div class="stat-label">Пройдено</div></div>
+    <div class="stat-card"><div class="stat-value blue">${(st.totalKm - st.doneKm).toFixed(0)} км</div><div class="stat-label">Залишилось</div></div>
+    <div class="stat-card"><div class="stat-value">${(st.totalGain/1000).toFixed(1)}к м</div><div class="stat-label">Набір висоти</div></div>
+    <div class="stat-card"><div class="stat-value">${st.totalDays}</div><div class="stat-label">Днів загалом</div></div>`;
+
+  document.getElementById('progress').innerHTML = `
+    <div class="progress-header"><span>Прогрес проходження</span><strong>${pct.toFixed(1)}%</strong></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>`;
+
+  renderElevProfile();
+
+  // Elevation bars (no transfer)
+  const hiking = STAGES.filter(s => !s.transfer);
+  const maxGain = Math.max(...hiking.map(s => s.gain));
+  document.getElementById('elevBars').innerHTML = hiking.map(s => {
+    const h = Math.max(8, (s.gain / maxGain) * 217);
+    const cls = s.done ? 'done-bar' : 'plan-bar';
+    const idx = STAGES.indexOf(s);
+    return `<div class="elev-bar-wrap" onclick="toggle(${idx})">
+      <div class="elev-bar-val">${s.gain} м</div>
+      <div class="elev-bar ${cls}" style="height:${h}px"></div>
+      <div class="elev-bar-label"><span class="from">${s.name.split(' → ')[0]}</span><br><span class="arrow">↓</span><br><span class="to">${s.name.split(' → ')[1]}</span></div>
+    </div>`;
+  }).join('');
+
+  // Sort bar
+  document.getElementById('sortBar').innerHTML = '<span>Сортувати:</span>' + SORT_OPTIONS.map(o =>
+    `<button class="sort-btn ${currentSort===o.key?'active':''}" onclick="setSort('${o.key}')">${o.label}</button>`
+  ).join('');
+
+  // Route cards
+  const sorted = getSorted();
+  document.getElementById('route').innerHTML = sorted.filter(s => !s.transfer).map(s => {
+    const idx = STAGES.indexOf(s);
+    const cls = s.done ? 'done' : '';
+    const dl = diffLabel(s.diff);
+
+    return `<div class="stage-card ${cls}">
+      <div class="timeline"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+      <div class="card-body" onclick="openDetail(${idx})">
+        <div class="card-top">
+          <div><span class="stage-num">#${s.id}</span><span class="stage-name">${s.name}</span></div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span class="badge ${dl.cls}">${dl.text}</span>
+            <span class="badge ${s.done?'badge-done':'badge-plan'}">${s.done?'✅ Пройдено':'🔲 Заплановано'}</span>
+          </div>
+        </div>
+        <div class="card-metrics">
+          <div class="metric"><span class="metric-val">${s.km} км</span><span class="metric-label">Дистанція</span></div>
+          <div class="metric"><span class="metric-val up">↑ ${s.gain} м</span><span class="metric-label">Набір</span></div>
+          <div class="metric"><span class="metric-val down">↓ ${s.loss} м</span><span class="metric-label">Спуск</span></div>
+          <div class="metric"><span class="metric-val">${s.maxEle} м</span><span class="metric-label">Макс. висота</span></div>
+          <div class="metric"><span class="metric-val">${s.format}</span><span class="metric-label">Формат</span></div>
+          <div class="metric"><span class="metric-val">${s.hours} год</span><span class="metric-label">Час руху</span></div>
+        </div>
+        <div class="card-note">${s.note}</div>
+        <div class="card-actions">
+          <button class="toggle-btn" onclick="event.stopPropagation();toggle(${idx})">${s.done?'↩ Зняти позначку':'✓ Позначити пройденим'}</button>
+          <button class="detail-btn" onclick="event.stopPropagation();openDetail(${idx})">📋 Детальніше</button>
+        </div>
+      </div></div>`;
+  }).join('');
+}
+
+function setSort(key) { currentSort = key; render(); }
+
+/* ── Init ── */
+async function init() {
+  loadStateLocal(); render();
+  if(apiUrl) { const ok = await loadStateRemote(); if(ok) render(); }
+  else setSyncUI('offline','Локальний режим');
+}
+init();
+document.getElementById('detailOverlay').addEventListener('click', e => { if(e.target.id==='detailOverlay') closeDetail(); });
+</script>
+</body>
+</html>
